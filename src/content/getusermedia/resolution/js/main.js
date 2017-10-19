@@ -67,8 +67,11 @@ function errorMessage(who, what) {
   let message = who + ': ' + what;
   messagebox.innerHTML = message;
   messagebox.style.display = 'block';
-  videoblock.style.display = 'none';
   console.log(message);
+}
+
+function clearErrorMessage() {
+  messagebox.style.display = 'none';
 }
 
 function displayVideoDimensions() {
@@ -86,7 +89,8 @@ video.onloadedmetadata = displayVideoDimensions;
 function constraintChange(e) {
   widthOutput.textContent = e.target.value;
   let track = window.stream.getVideoTracks()[0];
-  let constraints = {video: {width: {exact: e.target.value}}};
+  let constraints = {width: {exact: e.target.value}};
+  clearErrorMessage();
   console.log('applying ' + JSON.stringify(constraints));
   track.applyConstraints(constraints)
     .then(function() { console.log('applyConstraint success'); })
@@ -104,6 +108,8 @@ function getMedia(constraints) {
     });
   }
 
+  clearErrorMessage();
+  videoblock.style.display = 'none';
   navigator.mediaDevices.getUserMedia(constraints)
   .then(gotStream)
   .catch(function(e) {
