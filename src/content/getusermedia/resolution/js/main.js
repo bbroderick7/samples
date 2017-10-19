@@ -61,6 +61,16 @@ function gotStream(mediaStream) {
   video.srcObject = mediaStream;
   messagebox.style.display = 'none';
   videoblock.style.display = 'block';
+  let track = mediaStream.getVideoTracks()[0];
+  let constraints = track.getConstraints();
+  console.log('Result constraints: ' + JSON.stringify(constraints));
+  if (constraints && constraints.width && constraints.width.exact) {
+    widthInput.value = constraints.width.exact;
+    widthOutput.textContent = constraints.width.exact;
+  } else if (constraints && constraints.width && constraints.width.min) {
+    widthInput.value = constraints.width.min;
+    widthOutput.textContent = constraints.width.min;
+  }
 }
 
 function errorMessage(who, what) {
@@ -75,16 +85,19 @@ function clearErrorMessage() {
 }
 
 function displayVideoDimensions() {
-  if (!video.videoWidth) {
-    setTimeout(displayVideoDimensions, 500);
-  }
-  dimensions.innerHTML = 'Actual video dimensions: ' + video.videoWidth +
+  if (video.videoWidth) {
+    dimensions.innerHTML = 'Actual video dimensions: ' + video.videoWidth +
     'x' + video.videoHeight + 'px.';
-  widthInput.value = video.videoWidth;
-  widthOutput.textContent = video.videoWidth;
+    console.log(dimensions.innerHTML);
+  } else {
+    dimensions.innerHTML = 'Video not ready';
+  }
 }
 
 video.onloadedmetadata = displayVideoDimensions;
+// Video size takes a few seconds to change when size changes,
+// so we track it every half second.
+setInterval(displayVideoDimensions, 500);
 
 function constraintChange(e) {
   widthOutput.textContent = e.target.value;
@@ -93,7 +106,9 @@ function constraintChange(e) {
   clearErrorMessage();
   console.log('applying ' + JSON.stringify(constraints));
   track.applyConstraints(constraints)
-    .then(function() { console.log('applyConstraint success'); })
+    .then(function() {
+      console.log('applyConstraint success');
+    })
     .catch(function(e) { 
       errorMessage('applyConstraints', e.name);
     });
