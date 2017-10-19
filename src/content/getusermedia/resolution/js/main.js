@@ -17,6 +17,13 @@ var qvgaButton = document.querySelector('#qvga');
 var hdButton = document.querySelector('#hd');
 var fullHdButton = document.querySelector('#full-hd');
 
+// Either videoblock or messagebox is shown.
+var videoblock = document.querySelector('#videoblock');
+var messagebox = document.querySelector('#errormessage');
+
+var widthInput = document.querySelector('div#width input');
+var widthOutput = document.querySelector('div#width span');
+
 vgaButton.onclick = function() {
   getMedia(vgaConstraints);
 };
@@ -52,6 +59,16 @@ var fullHdConstraints = {
 function gotStream(mediaStream) {
   window.stream = mediaStream; // stream available to console
   video.srcObject = mediaStream;
+  messagebox.style.display = 'none';
+  videoblock.style.display = 'block';
+}
+
+function errorMessage(who, what) {
+  let message = who + ': ' + what;
+  messagebox.innerHTML = message;
+  messagebox.style.display = 'block';
+  videoblock.style.display = 'none';
+  console.log(message);
 }
 
 function displayVideoDimensions() {
@@ -60,9 +77,25 @@ function displayVideoDimensions() {
   }
   dimensions.innerHTML = 'Actual video dimensions: ' + video.videoWidth +
     'x' + video.videoHeight + 'px.';
+  widthInput.value = video.videoWidth;
+  widthOutput.textContent = video.videoWidth;
 }
 
 video.onloadedmetadata = displayVideoDimensions;
+
+function constraintChange(e) {
+  widthOutput.textContent = e.target.value;
+  let track = window.stream.getVideoTracks()[0];
+  let constraints = {video: {width: {exact: e.target.value}}};
+  console.log('applying ' + JSON.stringify(constraints));
+  track.applyConstraints(constraints)
+    .then(function() { console.log('applyConstraint success'); })
+    .catch(function(e) { 
+      errorMessage('applyConstraints', e.name);
+    });
+}
+
+widthInput.onchange = constraintChange;
 
 function getMedia(constraints) {
   if (stream) {
@@ -74,8 +107,6 @@ function getMedia(constraints) {
   navigator.mediaDevices.getUserMedia(constraints)
   .then(gotStream)
   .catch(function(e) {
-    var message = 'getUserMedia error: ' + e.name;
-    alert(message);
-    console.log(message);
+    errorMessage('getUserMedia', e.name);
   });
 }
