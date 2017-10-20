@@ -77,7 +77,7 @@ function gotStream(mediaStream) {
 
 function errorMessage(who, what) {
   let message = who + ': ' + what;
-  messagebox.innerHTML = message;
+  messagebox.innerText = message;
   messagebox.style.display = 'block';
   console.log(message);
 }
