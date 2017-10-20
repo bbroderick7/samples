@@ -17,12 +17,14 @@ var qvgaButton = document.querySelector('#qvga');
 var hdButton = document.querySelector('#hd');
 var fullHdButton = document.querySelector('#full-hd');
 
-// Either videoblock or messagebox is shown.
 var videoblock = document.querySelector('#videoblock');
 var messagebox = document.querySelector('#errormessage');
 
 var widthInput = document.querySelector('div#width input');
 var widthOutput = document.querySelector('div#width span');
+
+var currentWidth = 0;
+var currentHeight = 0;
 
 vgaButton.onclick = function() {
   getMedia(vgaConstraints);
@@ -84,20 +86,28 @@ function clearErrorMessage() {
   messagebox.style.display = 'none';
 }
 
-function displayVideoDimensions() {
+function displayVideoDimensions(whereSeen) {
   if (video.videoWidth) {
     dimensions.innerHTML = 'Actual video dimensions: ' + video.videoWidth +
-    'x' + video.videoHeight + 'px.';
-    console.log(dimensions.innerHTML);
+      'x' + video.videoHeight + 'px.';
+    if (currentWidth !== video.videoWidth
+        || currentHeight !== video.videoHeight) {
+      console.log(whereSeen + ': ' + dimensions.innerHTML);
+      currentWidth = video.videoWidth;
+      currentHeight = video.videoHeight;
+    }
   } else {
     dimensions.innerHTML = 'Video not ready';
   }
 }
 
-video.onloadedmetadata = displayVideoDimensions;
-// Video size takes a few seconds to change when size changes,
-// so we track it every half second.
-setInterval(displayVideoDimensions, 500);
+video.onloadedmetadata = function() {
+  displayVideoDimensions('loadedmetadata');
+};
+
+video.onresize = function() {
+  displayVideoDimensions('resize');
+};
 
 function constraintChange(e) {
   widthOutput.textContent = e.target.value;
@@ -108,9 +118,10 @@ function constraintChange(e) {
   track.applyConstraints(constraints)
     .then(function() {
       console.log('applyConstraint success');
+      displayVideoDimensions('applyConstraints');
     })
-    .catch(function(e) { 
-      errorMessage('applyConstraints', e.name);
+    .catch(function(err) {
+      errorMessage('applyConstraints', err.name);
     });
 }
 
